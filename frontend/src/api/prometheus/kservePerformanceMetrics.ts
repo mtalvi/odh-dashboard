@@ -178,42 +178,41 @@ export const useFetchKserveMemoryUsageData = (
   });
 };
 
-// Graph #5
-type TimePerOutputTokenData = {
+// Graph #4 - Time to First Token
+type TimeToFirstTokenData = {
   data: {
-      timePerOutputToken: PendingContextResourceData<PrometheusQueryRangeResultValue>;
+      timeToFirstToken: PendingContextResourceData<PrometheusQueryRangeResultValue>;
   };
   refreshAll: () => void;
 };
-export const useFetchNimTimePerOutputTokenData = (
+
+
+export const useFetchNimTimeToFirstTokenData = (
   metricsDef: KserveMetricGraphDefinition,
   timeframe: TimeframeTitle,
   endInMs: number,
   namespace: string,
-): TimePerOutputTokenData => {
-  // Check if Nim metrics are active
+): TimeToFirstTokenData => {
   const active = useIsAreaAvailable(SupportedArea.K_SERVE_METRICS).status;
-  // Extract the query for TIME_PER_OUTPUT_TOKEN
-  const timePerOutputTokenQuery = metricsDef.queries[0].query; // Assumes it's the first query in the metric definition
-  // Fetch data using useQueryRangeResourceData
-  const timePerOutputToken = useQueryRangeResourceData(
+
+  const timeToFirstToken = useQueryRangeResourceData(
       active,
-      timePerOutputTokenQuery,
+      metricsDef.queries[0]?.query,
       endInMs,
       timeframe,
       defaultResponsePredicate,
       namespace,
   );
-  // Memoize the fetched data
+
   const data = React.useMemo(
       () => ({
-          timePerOutputToken,
+          timeToFirstToken,
       }),
-      [timePerOutputToken],
+      [timeToFirstToken],
   );
-  // Return all-settled context resource data
+
   return useAllSettledContextResourceData(data, {
-      timePerOutputToken: DEFAULT_PENDING_CONTEXT_RESOURCE,
+      timeToFirstToken: DEFAULT_PENDING_CONTEXT_RESOURCE,
   });
 };
 
