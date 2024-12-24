@@ -23,6 +23,8 @@ const NimTimePerOutputTokenGraph: React.FC<NimTimePerOutputTokenGraphProps> = ({
   const {
     data: { timePerOutputToken },
   } = useFetchNimTimePerOutputTokenData(graphDefinition, timeframe, end, namespace);
+  // Log the fetched data to debug
+  console.log('Fetched timePerOutputToken data:', timePerOutputToken);
   return (
     <MetricsChart
       title={graphDefinition.title}
