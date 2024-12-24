@@ -178,24 +178,24 @@ export const useFetchKserveMemoryUsageData = (
   });
 };
 
-// Graph #4 - Time to First Token
-type TimeToFirstTokenData = {
+// Graph #1 - KV Cache usage over time
+type KVCacheUsageData = {
   data: {
-      timeToFirstToken: PendingContextResourceData<PrometheusQueryRangeResultValue>;
+      kvCacheUsage: PendingContextResourceData<PrometheusQueryRangeResultValue>;
   };
   refreshAll: () => void;
 };
 
 
-export const useFetchNimTimeToFirstTokenData = (
+export const useFetchNimKVCacheUsageData = (
   metricsDef: KserveMetricGraphDefinition,
   timeframe: TimeframeTitle,
   endInMs: number,
   namespace: string,
-): TimeToFirstTokenData => {
+): KVCacheUsageData => {
   const active = useIsAreaAvailable(SupportedArea.K_SERVE_METRICS).status;
 
-  const timeToFirstToken = useQueryRangeResourceData(
+  const kvCacheUsage = useQueryRangeResourceData(
       active,
       metricsDef.queries[0]?.query,
       endInMs,
@@ -206,13 +206,13 @@ export const useFetchNimTimeToFirstTokenData = (
 
   const data = React.useMemo(
       () => ({
-          timeToFirstToken,
+          kvCacheUsage,
       }),
-      [timeToFirstToken],
+      [kvCacheUsage],
   );
 
   return useAllSettledContextResourceData(data, {
-      timeToFirstToken: DEFAULT_PENDING_CONTEXT_RESOURCE,
+      kvCacheUsage: DEFAULT_PENDING_CONTEXT_RESOURCE,
   });
 };
 
