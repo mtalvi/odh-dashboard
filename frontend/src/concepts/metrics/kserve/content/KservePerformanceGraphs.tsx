@@ -69,6 +69,17 @@ const KservePerformanceGraphs: React.FC<KservePerformanceGraphsProps> = ({
       );
     }
 
+    if (graphDefinition.type === KserveMetricsGraphTypes.TIME_PER_OUTPUT_TOKEN) {
+      return (
+        <KserveMemoryUsageGraph
+          graphDefinition={graphDefinition}
+          timeframe={timeframe}
+          end={end}
+          namespace={namespace}
+        />
+      );
+    }
+
     // TODO: add an unsupported graph type error state.
     return null;
   };
