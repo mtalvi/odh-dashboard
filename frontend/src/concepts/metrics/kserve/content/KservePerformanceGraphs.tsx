@@ -7,6 +7,8 @@ import { TimeframeTitle } from '~/concepts/metrics/types';
 import KserveMeanLatencyGraph from '~/concepts/metrics/kserve/content/KserveMeanLatencyGraph';
 import KserveCpuUsageGraph from '~/concepts/metrics/kserve/content/KserveCpuUsageGraph';
 import KserveMemoryUsageGraph from '~/concepts/metrics/kserve/content/KserveMemoryUsageGraph';
+import KserveTimePerOutputTokenGraph from '~/concepts/metrics/kserve/content/KserveTimePerOutputTokenGraph';
+
 
 type KservePerformanceGraphsProps = {
   namespace: string;
@@ -71,7 +73,7 @@ const KservePerformanceGraphs: React.FC<KservePerformanceGraphsProps> = ({
 
     if (graphDefinition.type === KserveMetricsGraphTypes.TIME_PER_OUTPUT_TOKEN) {
       return (
-        <KserveMemoryUsageGraph
+        <KserveTimePerOutputTokenGraph
           graphDefinition={graphDefinition}
           timeframe={timeframe}
           end={end}
