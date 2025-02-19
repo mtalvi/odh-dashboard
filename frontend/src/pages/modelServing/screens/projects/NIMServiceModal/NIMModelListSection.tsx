@@ -7,12 +7,24 @@ import {
   CreatingServingRuntimeObject,
 } from '~/pages/modelServing/screens/types';
 import TypeaheadSelect, { TypeaheadSelectOption } from '~/components/TypeaheadSelect';
+import { Stack, StackItem } from '@patternfly/react-core';
 
 type NIMModelListSectionProps = {
   inferenceServiceData: CreatingInferenceServiceObject;
   setInferenceServiceData: UpdateObjectAtPropAndValue<CreatingInferenceServiceObject>;
   setServingRuntimeData: UpdateObjectAtPropAndValue<CreatingServingRuntimeObject>;
   isEditing?: boolean;
+};
+
+const normalizeVersion = (version: string): string => {
+  if (/^\d+(\.\d+)*$/.test(version)) {
+    const parts = version.split('.').map(Number);
+    while (parts.length < 3) {
+      parts.push(0);
+    }
+    return parts.join('.');
+  }
+  return version;
 };
 
 const NIMModelListSection: React.FC<NIMModelListSectionProps> = ({
@@ -22,8 +34,14 @@ const NIMModelListSection: React.FC<NIMModelListSectionProps> = ({
   isEditing,
 }) => {
   const [modelList, setModelList] = React.useState<ModelInfo[]>([]);
-  const [options, setOptions] = React.useState<TypeaheadSelectOption[]>([]);
+  const [teams, setTeams] = React.useState<TypeaheadSelectOption[]>([]);
+  const [models, setModels] = React.useState<TypeaheadSelectOption[]>([]);
+  const [tags, setTags] = React.useState<TypeaheadSelectOption[]>([]);
+
+  const [selectedTeam, setSelectedTeam] = React.useState<string>('');
   const [selectedModel, setSelectedModel] = React.useState<string>('');
+  const [selectedTag, setSelectedTag] = React.useState<string>('');
+
   const [error, setError] = React.useState<string>('');
 
   React.useEffect(() => {
@@ -31,73 +49,95 @@ const NIMModelListSection: React.FC<NIMModelListSectionProps> = ({
       try {
         const modelInfos = await fetchNIMModelNames();
         if (modelInfos && modelInfos.length > 0) {
-          const fetchedOptions = modelInfos.flatMap((modelInfo) =>
-            modelInfo.tags.map((tag) => ({
-              value: `${modelInfo.name}-${tag}`,
-              content: `${modelInfo.displayName} - ${tag}`,
-            })),
+          setModelList(modelInfos);
+
+          const uniqueTeams = Array.from(
+            new Set(modelInfos.map((model) => model.namespace.split('/')[1]))
           );
 
-          setModelList(modelInfos);
-          setOptions(fetchedOptions);
-          setError('');
+          setTeams(
+            uniqueTeams.map((team) => ({
+              value: team,
+              content: team,
+            }))
+          );
 
-          if (isEditing) {
-            const modelName = inferenceServiceData.format.name;
-            const modelInfo = modelInfos.find((model) => model.name === modelName);
-            if (modelInfo && modelInfo.tags.length > 0) {
-              setSelectedModel(`${modelInfo.name}-${modelInfo.tags[0]}`);
-            } else {
-              setSelectedModel(modelName);
-            }
-          }
+          setError('');
         } else {
           setError('No NVIDIA NIM models found. Please check the installation.');
-          setOptions([]);
         }
       } catch (err) {
         setError('There was a problem fetching the NIM models. Please try again later.');
-        setOptions([]);
       }
     };
 
     getModelNames();
-  }, [isEditing, inferenceServiceData.format.name]);
+  }, []);
 
-  const getSupportedModelFormatsInfo = (key: string) => {
-    const lastHyphenIndex = key.lastIndexOf('-');
-    if (lastHyphenIndex === -1) {
-      return null;
-    }
-    const name = key.slice(0, lastHyphenIndex);
-    const version = key.slice(lastHyphenIndex + 1);
-    const modelInfo = modelList.find((model) => model.name === name);
-    return modelInfo ? { name: modelInfo.name, version } : null;
-  };
-
-  const getNIMImageName = (key: string) => {
-    const lastHyphenIndex = key.lastIndexOf('-');
-    if (lastHyphenIndex === -1) {
-      return '';
-    }
-    const name = key.slice(0, lastHyphenIndex);
-    const version = key.slice(lastHyphenIndex + 1);
-    const imageInfo = modelList.find((model) => model.name === name);
-    return imageInfo ? `nvcr.io/${imageInfo.namespace}/${name}:${version}` : '';
-  };
-
-  const onSelect = (
-    _event: React.MouseEvent | React.KeyboardEvent | undefined,
-    key: string | number,
+  const handleTeamSelect = (
+    _event: React.MouseEvent<Element, MouseEvent> | React.KeyboardEvent<HTMLInputElement> | undefined,
+    key: string | number
   ) => {
-    if (typeof key !== 'string' || isEditing) {
-      return;
-    }
+    if (typeof key !== 'string') return;
+    setSelectedTeam(key);
+    setSelectedModel('');
+    setSelectedTag('');
+
+    const filteredModels = modelList
+      .filter((model) => model.namespace.split('/')[1] === key)
+      .map((model) => ({
+        value: model.name,
+        content: model.displayName,
+      }));
+
+    setModels(filteredModels);
+    setTags([]);
+  };
+
+  const handleModelSelect = (
+    _event: React.MouseEvent<Element, MouseEvent> | React.KeyboardEvent<HTMLInputElement> | undefined,
+    key: string | number
+  ) => {
+    if (typeof key !== 'string') return;
     setSelectedModel(key);
-    const modelInfo = getSupportedModelFormatsInfo(key);
+    setSelectedTag('');
+
+    const modelInfo = modelList.find((model) => model.name === key);
     if (modelInfo) {
-      setServingRuntimeData('supportedModelFormatsInfo', modelInfo);
-      setServingRuntimeData('imageName', getNIMImageName(key));
+      const normalizedTagMap = new Map<string, string>();
+      modelInfo.tags.forEach((tag) => {
+        const normalized = normalizeVersion(tag);
+        normalizedTagMap.set(tag, normalized);
+      });
+
+      const uniqueTags = Array.from(new Set(normalizedTagMap.values())).map((normalized) => {
+        const originalTag = [...normalizedTagMap.entries()].find(([_, v]) => v === normalized)?.[0];
+        return {
+          value: originalTag || normalized,
+          content: normalized,
+        };
+      });
+
+      setTags(uniqueTags);
+    }
+  };
+
+  const handleTagSelect = (
+    _event: React.MouseEvent<Element, MouseEvent> | React.KeyboardEvent<HTMLInputElement> | undefined,
+    key: string | number
+  ) => {
+    if (typeof key !== 'string') return;
+    setSelectedTag(key);
+
+    const modelInfo = modelList.find((model) => model.name === selectedModel);
+    if (modelInfo) {
+      setServingRuntimeData('supportedModelFormatsInfo', {
+        name: modelInfo.name,
+        version: key,
+      });
+
+      setServingRuntimeData('imageName', `nvcr.io/${modelInfo.namespace}/${modelInfo.name}:${key}`);
+
       setInferenceServiceData('format', { name: modelInfo.name });
       setError('');
     } else {
@@ -107,25 +147,56 @@ const NIMModelListSection: React.FC<NIMModelListSectionProps> = ({
 
   return (
     <FormGroup label="NVIDIA NIM" fieldId="nim-model-list-selection" isRequired>
-      <TypeaheadSelect
-        selectOptions={options}
-        selected={selectedModel}
-        isScrollable
-        isDisabled={isEditing}
-        onSelect={onSelect}
-        placeholder={isEditing ? selectedModel : 'Select NVIDIA NIM to deploy'}
-        noOptionsFoundMessage={(filter) => `No results found for "${filter}"`}
-        isCreatable={false}
-        allowClear={!isEditing}
-        onClearSelection={() => {
-          if (!isEditing) {
-            setSelectedModel('');
-            setServingRuntimeData('supportedModelFormatsInfo', undefined);
-            setServingRuntimeData('imageName', undefined);
-            setInferenceServiceData('format', { name: '' });
-          }
-        }}
-      />
+      <Stack hasGutter>
+        <StackItem>
+          <TypeaheadSelect
+            selectOptions={teams}
+            selected={selectedTeam}
+            onSelect={handleTeamSelect}
+            placeholder="Select Team"
+            noOptionsFoundMessage={(filter) => `No teams found for "${filter}"`}
+            isCreatable={false}
+            allowClear
+            onClearSelection={() => {
+              setSelectedTeam('');
+              setSelectedModel('');
+              setSelectedTag('');
+              setModels([]);
+              setTags([]);
+            }}
+          />
+        </StackItem>
+        <StackItem>
+          <TypeaheadSelect
+            selectOptions={models}
+            selected={selectedModel}
+            onSelect={handleModelSelect}
+            placeholder="Select Model"
+            noOptionsFoundMessage={(filter) => `No models found for "${filter}"`}
+            isCreatable={false}
+            allowClear
+            isDisabled={!selectedTeam}
+            onClearSelection={() => {
+              setSelectedModel('');
+              setSelectedTag('');
+              setTags([]);
+            }}
+          />
+        </StackItem>
+        <StackItem>
+          <TypeaheadSelect
+            selectOptions={tags}
+            selected={selectedTag}
+            onSelect={handleTagSelect}
+            placeholder="Select Tag"
+            noOptionsFoundMessage={(filter) => `No tags found for "${filter}"`}
+            isCreatable={false}
+            allowClear
+            isDisabled={!selectedModel}
+            onClearSelection={() => setSelectedTag('')}
+          />
+        </StackItem>
+      </Stack>
       {error && (
         <HelperText>
           <HelperTextItem variant="error">{error}</HelperTextItem>
