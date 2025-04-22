@@ -201,6 +201,7 @@ const HeaderTools: React.FC<HeaderToolsProps> = ({ onNotificationsClick }) => {
                 isSelected={theme === 'dark'}
                 onChange={() => {
                   setTheme('dark');
+                      window.alert("I'm batman");
                 }}
               />
             </ToggleGroup>
