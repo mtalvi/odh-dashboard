@@ -67,6 +67,7 @@ import { useDefaultStorageClass } from '#~/pages/projects/screens/spawner/storag
 import { useModelDeploymentNotification } from '#~/pages/modelServing/screens/projects/useModelDeploymentNotification';
 import { useGetStorageClassConfig } from '#~/pages/projects/screens/spawner/storage/useGetStorageClassConfig';
 import useModelServerSizeValidation from '#~/pages/modelServing/screens/projects/useModelServerSizeValidation.ts';
+import EnvironmentVariablesSection from '#~/pages/modelServing/screens/projects/kServeModal/EnvironmentVariablesSection';
 import { NoAuthAlert } from './NoAuthAlert';
 
 const NIM_SECRET_NAME = 'nvidia-nim-secrets';
@@ -470,6 +471,15 @@ const ManageNIMServingModal: React.FC<ManageNIMServingModalProps> = ({
                 setData={setCreateDataInferenceService}
                 infoContent="Consider network traffic and failover scenarios when specifying the number of model
                 server replicas."
+              />
+            </StackItem>
+            <StackItem>
+              <EnvironmentVariablesSection
+                predefinedVars={
+                  servingRuntimeSelected?.spec.containers[0]?.env?.map((v) => v.name) || []
+                }
+                data={createDataInferenceService}
+                setData={setCreateDataInferenceService}
               />
             </StackItem>
             <ServingRuntimeSizeSection

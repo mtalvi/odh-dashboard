@@ -9,13 +9,46 @@ import {
   k8sPatchResource,
 } from '@openshift/dynamic-plugin-sdk-utils';
 import { InferenceServiceModel, PodModel } from '#~/api/models';
-import { InferenceServiceKind, K8sAPIOptions, KnownLabels, PodKind } from '#~/k8sTypes';
+import {
+  InferenceServiceKind,
+  K8sAPIOptions,
+  KnownLabels,
+  PodKind,
+  ServingContainer,
+} from '#~/k8sTypes';
 import { CreatingInferenceServiceObject } from '#~/pages/modelServing/screens/types';
 import { applyK8sAPIOptions } from '#~/api/apiMergeUtils';
 import { getInferenceServiceDeploymentMode } from '#~/pages/modelServing/screens/projects/utils';
 import { parseCommandLine } from '#~/api/k8s/utils';
 import { ModelServingPodSpecOptions } from '#~/concepts/hardwareProfiles/useModelServingPodSpecOptionsState';
 import { getModelServingProjects } from './projects';
+
+const hasEnvironmentVariablesChanged = (
+  existingEnvVars: ServingContainer['env'],
+  newEnvVars: ServingContainer['env'],
+): boolean => {
+  const existing = existingEnvVars || [];
+  const newVars = newEnvVars || [];
+
+  if (existing.length !== newVars.length) {
+    return true;
+  }
+
+  // Sort both arrays for comparison
+  const sortedExisting = [...existing].toSorted((a, b) =>
+    (a.name || '').localeCompare(b.name || ''),
+  );
+  const sortedNew = [...newVars].toSorted((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+  return sortedExisting.some((existingVar, index) => {
+    const newVar = sortedNew[index];
+    return (
+      existingVar.name !== newVar.name ||
+      existingVar.value !== newVar.value ||
+      JSON.stringify(existingVar.valueFrom) !== JSON.stringify(newVar.valueFrom)
+    );
+  });
+};
 
 const applyAuthToInferenceService = (
   inferenceService: InferenceServiceKind,
@@ -144,6 +177,14 @@ export const assembleInferenceService = (
     } else {
       annotations['opendatahub.io/hardware-profile-namespace'] = dashboardNamespace;
     }
+  }
+
+  // Check if environment variables have changed during edit and add update strategy annotation
+  if (
+    inferenceService &&
+    hasEnvironmentVariablesChanged(inferenceService.spec.predictor.model?.env, nonEmptyEnvVars)
+  ) {
+    annotations['runtimes.opendatahub.io/env-update-strategy'] = 'recreate';
   }
 
   const labels = { ...updatedInferenceService.metadata.labels, ...data.labels };
