@@ -38,7 +38,6 @@ const NIMPVCSelector: React.FC<NIMPVCSelectorProps> = ({
   // Auto-set model path when a PVC is selected
   React.useEffect(() => {
     if (existingPvcName && !showManualInput) {
-      // Use the standard NIM cache path
       setModelPath(DEFAULT_MODEL_PATH);
     }
   }, [existingPvcName, showManualInput, setModelPath]);
@@ -49,7 +48,6 @@ const NIMPVCSelector: React.FC<NIMPVCSelectorProps> = ({
   };
 
   const onSelect = (key: string) => {
-    // Find the PVC info by key
     const selectedPVC = compatiblePVCs.find((pvc) => pvc.pvcName === key);
     if (selectedPVC) {
       setExistingPvcName(selectedPVC.pvcName);
@@ -94,7 +92,6 @@ const NIMPVCSelector: React.FC<NIMPVCSelectorProps> = ({
     );
   }
 
-  // Prepare options for SimpleSelect
   const selectOptions: SimpleSelectOption[] = compatiblePVCs.map((pvcInfo) => ({
     key: pvcInfo.pvcName,
     label: formatPVCOption(pvcInfo),
@@ -103,8 +100,8 @@ const NIMPVCSelector: React.FC<NIMPVCSelectorProps> = ({
 
   return (
     <>
-      {/* Show alert when no compatible storage found */}
-      {!hasCompatiblePVCs && (
+      {/* Show info when no compatible storage found */}
+      {!hasCompatiblePVCs && !showManualInput && (
         <Alert
           data-testid="no-compatible-pvcs-alert"
           variant={AlertVariant.info}
@@ -112,8 +109,8 @@ const NIMPVCSelector: React.FC<NIMPVCSelectorProps> = ({
           title="No compatible storage found"
         >
           {selectedModel
-            ? `No existing storage volumes found that contain ${selectedModel}.`
-            : 'Select a model to view if there are compatible storage volumes.'}
+            ? `No existing storage volumes found that contain ${selectedModel}. You can enter a PVC name manually below.`
+            : 'Select a model first to check for compatible storage volumes.'}
         </Alert>
       )}
 
@@ -123,6 +120,7 @@ const NIMPVCSelector: React.FC<NIMPVCSelectorProps> = ({
         fieldId="existing-pvc-name"
         isRequired
       >
+        {/* Show dropdown when compatible PVCs exist AND manual mode is not active */}
         {hasCompatiblePVCs && !showManualInput ? (
           <>
             <SimpleSelect
@@ -157,13 +155,16 @@ const NIMPVCSelector: React.FC<NIMPVCSelectorProps> = ({
           </>
         ) : (
           <>
+            {/* CRITICAL FIX: Manual input is now ALWAYS ENABLED
+                Changed from: isDisabled={!hasCompatiblePVCs && !showManualInput}
+                Changed to:   isDisabled={false}*/}
             <TextInput
               data-testid="manual-pvc-input"
               id="existing-pvc-name"
               value={existingPvcName}
               onChange={(_event, value) => setExistingPvcName(value)}
-              placeholder="Enter PVC name (e.g., nim-pvc-f75f401f3966fvfnhxw6yvfc)"
-              isDisabled={!hasCompatiblePVCs && !showManualInput}
+              placeholder="Enter PVC name (e.g., my-nim-models-pvc)"
+              isDisabled={false} // ← ALWAYS ENABLED NOW!
             />
             {showManualInput && hasCompatiblePVCs && (
               <HelperText>
@@ -188,10 +189,10 @@ const NIMPVCSelector: React.FC<NIMPVCSelectorProps> = ({
             )}
             {!hasCompatiblePVCs && (
               <HelperText>
-                <HelperTextItem data-testid="no-compatible-pvcs-warning" variant="warning">
+                <HelperTextItem data-testid="manual-entry-enabled-message">
                   {selectedModel
-                    ? `Field disabled - no compatible storage found for ${selectedModel}.`
-                    : 'Field disabled - select a model first.'}
+                    ? `No compatible storage found for ${selectedModel}. Enter the name of a PVC that contains pre-downloaded model files.`
+                    : 'Enter the name of a PVC that contains your pre-downloaded model files.'}
                 </HelperTextItem>
               </HelperText>
             )}
@@ -211,24 +212,17 @@ const NIMPVCSelector: React.FC<NIMPVCSelectorProps> = ({
           value={modelPath}
           onChange={(_event, value) => setModelPath(value)}
           placeholder={DEFAULT_MODEL_PATH}
-          isDisabled={!hasCompatiblePVCs && !showManualInput}
+          isDisabled={false} // ← ALWAYS ENABLED NOW!
         />
         <HelperText>
-          {!hasCompatiblePVCs ? (
-            <HelperTextItem data-testid="model-path-disabled-warning" variant="warning">
-              {selectedModel
-                ? `Field disabled - no compatible storage found for ${selectedModel}.`
-                : 'Field disabled - select a model first.'}
+          <HelperTextItem data-testid="model-path-description">
+            Path within the container where the model files will be mounted. For model cache
+            deployments, use {DEFAULT_MODEL_PATH}.
+          </HelperTextItem>
+          {hasCompatiblePVCs && (
+            <HelperTextItem data-testid="model-path-default-hint">
+              For most NIM deployments, the default path is correct.
             </HelperTextItem>
-          ) : (
-            <>
-              <HelperTextItem data-testid="model-path-description">
-                Path within the storage where {selectedModel} model files are located.
-              </HelperTextItem>
-              <HelperTextItem data-testid="model-path-default-hint">
-                For most NIM deployments, the default path {DEFAULT_MODEL_PATH} is correct.
-              </HelperTextItem>
-            </>
           )}
         </HelperText>
       </FormGroup>
