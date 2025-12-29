@@ -1,0 +1,28 @@
+{
+  "private": true,
+  "name": "@odh-dashboard/nim-serving",
+  "description": "Support for NVIDIA NIM model serving deployments via kserve",
+  "version": "0.0.0",
+  "scripts": {
+    "lint": "eslint .",
+    "test-unit": "jest --silent --passWithNoTests",
+    "test-unit-coverage": "jest --silent --coverage --passWithNoTests",
+    "type-check": "tsc --noEmit",
+    "test:fix": "eslint --ext .js,.ts,.jsx,.tsx . --fix"
+  },
+  "exports": {
+    "./extensions": "./extensions/extensions.ts",
+    "./types": "./src/types.ts",
+    "./wizardFields": "./src/wizardFields/index.ts"
+  },
+  "dependencies": {
+    "@odh-dashboard/internal": "*",
+    "@odh-dashboard/model-serving": "*",
+    "@odh-dashboard/kserve": "*"
+  },
+  "devDependencies": {
+    "@odh-dashboard/eslint-config": "*",
+    "@odh-dashboard/tsconfig": "*"
+  }
+}
+

@@ -436,5 +436,12 @@ export const ModelLocationInputFields: React.FC<ModelLocationInputFieldsProps> =
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (modelLocation === ModelLocationType.NIM) {
+    // NIM-specific fields should be rendered by the NIM extension
+    // This case should be handled by model serving platform extensions
+    return <Alert variant="info" title="NIM deployment fields not loaded" />;
+  }
+
   return <Alert variant="warning" title="There was a problem fetching connections" />;
 };

@@ -19,6 +19,7 @@
       "./src/components/*.d.ts",
       "./src/components/*.tsx"
     ],
+    "./types": "./src/components/deploymentWizard/types.ts",
     "./types/form-data": "./src/components/deploymentWizard/types.ts",
     "./concepts/auth": "./src/concepts/auth.ts",
     "./utils": "./src/concepts/utils.ts"

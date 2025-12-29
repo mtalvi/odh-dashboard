@@ -42,6 +42,7 @@ export enum ModelLocationType {
   NEW = 'new',
   EXISTING = 'existing',
   PVC = 'pvc',
+  NIM = 'nim',
 }
 
 export enum ModelTypeLabel {
@@ -50,7 +51,11 @@ export enum ModelTypeLabel {
 }
 
 export type ModelLocationData = {
-  type: ModelLocationType.EXISTING | ModelLocationType.NEW | ModelLocationType.PVC;
+  type:
+    | ModelLocationType.EXISTING
+    | ModelLocationType.NEW
+    | ModelLocationType.PVC
+    | ModelLocationType.NIM;
   connectionTypeObject?: ConnectionTypeConfigMapObj;
   connection?: string;
   disableInputFields?: boolean;
@@ -61,6 +66,16 @@ export type ModelLocationData = {
     modelPath?: string;
     modelUri?: string;
     pvcConnection?: string;
+    // For NIM additional fields
+    nimData?: {
+      selectedModel: string;
+      modelVersion: string;
+      apiKey: string;
+      pvcMode: 'create-new' | 'use-existing';
+      existingPvcName?: string;
+      pvcSize: string;
+      storageClassName: string;
+    };
   };
 };
 

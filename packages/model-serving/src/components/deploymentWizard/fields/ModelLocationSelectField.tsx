@@ -31,7 +31,7 @@ import { ModelLocationData, ModelLocationType } from '../types';
 
 // Schema
 export const modelLocationSelectFieldSchema = z.enum(
-  [ModelLocationType.EXISTING, ModelLocationType.NEW, ModelLocationType.PVC],
+  [ModelLocationType.EXISTING, ModelLocationType.NEW, ModelLocationType.PVC, ModelLocationType.NIM],
   {
     // eslint-disable-next-line @typescript-eslint/naming-convention, camelcase
     required_error: 'Select a model location.',
@@ -42,7 +42,8 @@ export type ModelLocationFieldData = z.infer<typeof modelLocationSelectFieldSche
 export const isValidModelLocation = (value: string): value is ModelLocationFieldData =>
   value === ModelLocationType.EXISTING ||
   value === ModelLocationType.NEW ||
-  value === ModelLocationType.PVC;
+  value === ModelLocationType.PVC ||
+  value === ModelLocationType.NIM;
 
 // Hooks
 export type ModelLocationField = {
@@ -89,6 +90,10 @@ export const ModelLocationSelectField: React.FC<ModelLocationSelectFieldProps> =
     key: 'URI',
     label: 'URI',
     value: ModelLocationType.NEW,
+  };
+  const nimOption = {
+    key: ModelLocationType.NIM,
+    label: 'NVIDIA NIM',
   };
   const [modelServingConnectionTypes, connectionTypesLoaded] = useWatchConnectionTypes(true);
 
@@ -189,6 +194,7 @@ export const ModelLocationSelectField: React.FC<ModelLocationSelectFieldProps> =
         ? [{ key: ModelLocationType.EXISTING, label: 'Existing connection' }]
         : []),
       ...(pvcs.data.length > 0 ? [{ key: ModelLocationType.PVC, label: 'Cluster storage' }] : []),
+      nimOption,
       ...(s3ConnectionTypes.length > 0 ? [s3Option] : []),
       ...(ociConnectionTypes.length > 0 ? [ociOption] : []),
       ...(uriConnectionTypes.length > 0 ? [uriOption] : []),
@@ -351,6 +357,7 @@ export const ModelLocationSelectField: React.FC<ModelLocationSelectFieldProps> =
                   showCustomTypeSelect={showCustomTypeSelect}
                   customTypeOptions={typeOptions}
                   customTypeKey={selectedKey?.label}
+                  projectName={projectName}
                 />
               </StackItem>
             )}
