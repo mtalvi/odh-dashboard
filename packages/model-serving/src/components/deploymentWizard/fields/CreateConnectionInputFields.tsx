@@ -34,7 +34,8 @@ export const useCreateConnectionData = (
   const connectionData = React.useMemo(() => {
     if (
       modelLocationData?.type === ModelLocationType.EXISTING ||
-      modelLocationData?.type === ModelLocationType.PVC
+      modelLocationData?.type === ModelLocationType.PVC ||
+      modelLocationData?.type === ModelLocationType.NIM
     ) {
       return {
         ...createConnectionData,
@@ -101,7 +102,8 @@ export const CreateConnectionInputFields: React.FC<CreateConnectionInputFieldsPr
     if (
       !modelLocationData?.type ||
       modelLocationData.type === ModelLocationType.EXISTING ||
-      modelLocationData.type === ModelLocationType.PVC
+      modelLocationData.type === ModelLocationType.PVC ||
+      modelLocationData.type === ModelLocationType.NIM
     ) {
       return false;
     }

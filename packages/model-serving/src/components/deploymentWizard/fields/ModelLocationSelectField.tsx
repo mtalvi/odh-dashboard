@@ -25,13 +25,14 @@ import {
 } from '@odh-dashboard/internal/concepts/connectionTypes/utils';
 import { getResourceNameFromK8sResource } from '@odh-dashboard/internal/concepts/k8s/utils';
 import { useWatchConnectionTypes } from '@odh-dashboard/internal/utilities/useWatchConnectionTypes';
+// eslint-disable-next-line @odh-dashboard/no-restricted-imports
 import usePvcs from '@odh-dashboard/internal/pages/modelServing/usePvcs';
 import { ModelLocationInputFields, useModelLocationData } from './ModelLocationInputFields';
 import { ModelLocationData, ModelLocationType } from '../types';
 
 // Schema
 export const modelLocationSelectFieldSchema = z.enum(
-  [ModelLocationType.EXISTING, ModelLocationType.NEW, ModelLocationType.PVC],
+  [ModelLocationType.EXISTING, ModelLocationType.NEW, ModelLocationType.PVC, ModelLocationType.NIM],
   {
     // eslint-disable-next-line @typescript-eslint/naming-convention, camelcase
     required_error: 'Select a model location.',
@@ -42,7 +43,8 @@ export type ModelLocationFieldData = z.infer<typeof modelLocationSelectFieldSche
 export const isValidModelLocation = (value: string): value is ModelLocationFieldData =>
   value === ModelLocationType.EXISTING ||
   value === ModelLocationType.NEW ||
-  value === ModelLocationType.PVC;
+  value === ModelLocationType.PVC ||
+  value === ModelLocationType.NIM;
 
 // Hooks
 export type ModelLocationField = {
@@ -189,6 +191,8 @@ export const ModelLocationSelectField: React.FC<ModelLocationSelectFieldProps> =
         ? [{ key: ModelLocationType.EXISTING, label: 'Existing connection' }]
         : []),
       ...(pvcs.data.length > 0 ? [{ key: ModelLocationType.PVC, label: 'Cluster storage' }] : []),
+      // Always show NIM option for demo
+      { key: ModelLocationType.NIM, label: 'NVIDIA NIM' },
       ...(s3ConnectionTypes.length > 0 ? [s3Option] : []),
       ...(ociConnectionTypes.length > 0 ? [ociOption] : []),
       ...(uriConnectionTypes.length > 0 ? [uriOption] : []),
@@ -327,7 +331,8 @@ export const ModelLocationSelectField: React.FC<ModelLocationSelectFieldProps> =
                 value={
                   selectedKey?.key ??
                   (modelLocation === ModelLocationType.PVC ||
-                  modelLocation === ModelLocationType.EXISTING
+                  modelLocation === ModelLocationType.EXISTING ||
+                  modelLocation === ModelLocationType.NIM
                     ? modelLocation
                     : undefined)
                 }

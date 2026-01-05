@@ -9,6 +9,7 @@ import type {
   SecretKind,
   SupportedModelFormats,
 } from '@odh-dashboard/internal/k8sTypes';
+// eslint-disable-next-line @odh-dashboard/no-restricted-imports
 import type { LabeledConnection } from '@odh-dashboard/internal/pages/modelServing/screens/types';
 import type { RecursivePartial } from '@odh-dashboard/internal/typeHelpers';
 import type {
@@ -42,6 +43,7 @@ export enum ModelLocationType {
   NEW = 'new',
   EXISTING = 'existing',
   PVC = 'pvc',
+  NIM = 'nim',
 }
 
 export enum ModelTypeLabel {
@@ -50,7 +52,11 @@ export enum ModelTypeLabel {
 }
 
 export type ModelLocationData = {
-  type: ModelLocationType.EXISTING | ModelLocationType.NEW | ModelLocationType.PVC;
+  type:
+    | ModelLocationType.EXISTING
+    | ModelLocationType.NEW
+    | ModelLocationType.PVC
+    | ModelLocationType.NIM;
   connectionTypeObject?: ConnectionTypeConfigMapObj;
   connection?: string;
   disableInputFields?: boolean;
@@ -61,6 +67,20 @@ export type ModelLocationData = {
     modelPath?: string;
     modelUri?: string;
     pvcConnection?: string;
+    // For NIM additional fields
+    nimApiKey?: string;
+    nimModel?: {
+      name: string;
+      displayName: string;
+      version: string;
+    };
+    nimPvcMode?: 'create-new' | 'use-existing';
+    nimPvcSize?: string;
+    nimExistingPvcName?: string;
+    nimModelPath?: string;
+    nimPvcSubPath?: string;
+    nimStorageClassName?: string;
+    nimOperatorReady?: boolean;
   };
 };
 

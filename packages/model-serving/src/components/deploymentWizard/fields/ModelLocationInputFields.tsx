@@ -12,13 +12,16 @@ import {
   parseConnectionSecretValues,
 } from '@odh-dashboard/internal/concepts/connectionTypes/utils';
 import { z } from 'zod';
+// eslint-disable-next-line @odh-dashboard/no-restricted-imports
 import { ConnectionOciAlert } from '@odh-dashboard/internal/pages/modelServing/screens/projects/InferenceServiceModal/ConnectionOciAlert';
 import { PersistentVolumeClaimKind } from '@odh-dashboard/internal/k8sTypes';
+// eslint-disable-next-line @odh-dashboard/no-restricted-imports
 import {
   getPVCNameFromURI,
   isPVCUri,
 } from '@odh-dashboard/internal/pages/modelServing/screens/projects/utils';
 import { useWatchConnectionTypes } from '@odh-dashboard/internal/utilities/useWatchConnectionTypes';
+// eslint-disable-next-line @odh-dashboard/no-restricted-imports
 import useServingConnections from '@odh-dashboard/internal/pages/projects/screens/detail/connections/useServingConnections';
 import { getResourceNameFromK8sResource } from '@odh-dashboard/internal/concepts/k8s/utils';
 import { isGeneratedSecretName } from '@odh-dashboard/internal/api/k8s/secrets';
@@ -27,6 +30,7 @@ import { ExistingConnectionField } from './modelLocationFields/ExistingConnectio
 import NewConnectionField from './modelLocationFields/NewConnectionField';
 import { PvcSelectField } from './modelLocationFields/PVCSelectField';
 import { CustomTypeSelectField } from './modelLocationFields/CustomTypeSelectField';
+import { NIMFieldsContainer } from './nimFields/NIMFieldsContainer';
 import { ConnectionTypeRefs, ModelLocationData, ModelLocationType } from '../types';
 
 export type ModelLocationDataField = {
@@ -213,6 +217,13 @@ export const isValidModelLocationData = (
         String(modelLocationData.fieldValues.URI).startsWith(
           `pvc://${modelLocationData.additionalFields.pvcConnection}/`,
         )
+      );
+    case ModelLocationType.NIM:
+      return (
+        modelLocationData.type === ModelLocationType.NIM &&
+        !!modelLocationData.additionalFields.nimApiKey &&
+        !!modelLocationData.additionalFields.nimModel?.name &&
+        !!modelLocationData.additionalFields.nimOperatorReady
       );
     default:
       return (
@@ -432,6 +443,16 @@ export const ModelLocationInputFields: React.FC<ModelLocationInputFieldsProps> =
             },
           });
         }}
+      />
+    );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (modelLocation === ModelLocationType.NIM) {
+    return (
+      <NIMFieldsContainer
+        modelLocationData={modelLocationData}
+        setModelLocationData={setModelLocationData}
       />
     );
   }

@@ -61,6 +61,9 @@ const getStatusSections = (projectName?: string): StatusSection[] => [
           if (!locationData) {
             return '--';
           }
+          if (locationData.type === ModelLocationType.NIM) {
+            return 'NVIDIA NIM';
+          }
           if (locationData.type === ModelLocationType.PVC) {
             return 'Cluster storage';
           }
@@ -85,6 +88,17 @@ const getStatusSections = (projectName?: string): StatusSection[] => [
           }
           return 'New connection';
         },
+      },
+      {
+        key: 'modelLocationData-nimModel',
+        label: 'NIM model',
+        comp: (state) => {
+          const nimModel = state.modelLocationData.data?.additionalFields.nimModel;
+          return nimModel?.displayName || nimModel?.name || undefined;
+        },
+        optional: true,
+        isVisible: (wizardState) =>
+          wizardState.state.modelLocationData.data?.type === ModelLocationType.NIM,
       },
       {
         key: 'modelLocationData-existingConnectionName',
@@ -222,6 +236,8 @@ const getStatusSections = (projectName?: string): StatusSection[] => [
           return format.version ? `${format.name} - ${format.version}` : format.name;
         },
         optional: true,
+        isVisible: (wizardState) =>
+          wizardState.state.modelLocationData.data?.type !== ModelLocationType.NIM,
       },
       {
         key: 'modelServer',
@@ -232,6 +248,27 @@ const getStatusSections = (projectName?: string): StatusSection[] => [
         key: 'numReplicas',
         label: 'Replicas',
         comp: (state) => state.numReplicas.data ?? 1,
+      },
+      {
+        key: 'modelLocationData-nimPvcConfig',
+        label: 'Storage configuration',
+        comp: (state) => {
+          const additionalFields = state.modelLocationData.data?.additionalFields;
+          if (!additionalFields) return undefined;
+
+          const mode = additionalFields.nimPvcMode;
+          if (mode === 'create-new') {
+            return `Create new (${additionalFields.nimPvcSize || '30Gi'})`;
+          }
+          if (mode === 'use-existing') {
+            const pvcName = additionalFields.nimExistingPvcName;
+            return pvcName ? `Use existing: ${pvcName}` : 'Use existing PVC';
+          }
+          return undefined;
+        },
+        optional: true,
+        isVisible: (wizardState) =>
+          wizardState.state.modelLocationData.data?.type === ModelLocationType.NIM,
       },
     ],
   },

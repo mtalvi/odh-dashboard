@@ -23,6 +23,7 @@ import {
 } from './fields/ModelServerTemplateSelectField';
 import { modelFormatFieldSchema, type ModelFormatFieldData } from './fields/ModelFormatField';
 import { isValidProjectName } from './fields/ProjectSection';
+import { ModelLocationType } from './types';
 
 export type ModelDeploymentWizardValidation = {
   modelSource: ReturnType<typeof useZodFormValidation<ModelSourceStepData>>;
@@ -102,6 +103,10 @@ export const useModelDeploymentWizardValidation = (
   // Step validation
   const isModelSourceStepValid =
     modelSourceStepValidation.getFieldValidation(undefined, true).length === 0;
+
+  // Check if NIM is selected
+  const isNIM = state.modelLocationData.data?.type === ModelLocationType.NIM;
+
   const isModelDeploymentStepValid =
     isValidProjectName(
       state.project.initialProjectName ?? state.project.projectName ?? undefined,
@@ -109,7 +114,8 @@ export const useModelDeploymentWizardValidation = (
     isK8sNameDescriptionDataValid(state.k8sNameDesc.data) &&
     Object.keys(hardwareProfileValidation.getAllValidationIssues()).length === 0 &&
     numReplicasValidation.getFieldValidation(undefined, true).length === 0 &&
-    modelServerValidation.getFieldValidation(undefined, true).length === 0 &&
+    // For NIM, model server validation is optional (we auto-set it)
+    (isNIM || modelServerValidation.getFieldValidation(undefined, true).length === 0) &&
     (!state.modelFormatState.isVisible ||
       modelFormatValidation.getFieldValidation(undefined, true).length === 0);
   const isAdvancedSettingsStepValid =
