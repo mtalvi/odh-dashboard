@@ -1,6 +1,8 @@
 import React from 'react';
 // eslint-disable-next-line @odh-dashboard/no-restricted-imports
 import NIMModelListSection from '@odh-dashboard/internal/pages/modelServing/screens/projects/NIMServiceModal/NIMModelListSection';
+import { InferenceServiceStorageType } from '@odh-dashboard/internal/pages/modelServing/screens/types';
+import { EMPTY_AWS_SECRET_DATA } from '@odh-dashboard/internal/pages/projects/dataConnections/const';
 
 type NIMModelListSectionWrapperProps = {
   selectedModelName?: string;
@@ -20,7 +22,23 @@ const NIMModelListSectionWrapper: React.FC<NIMModelListSectionWrapperProps> = ({
   // Create mock inference service and serving runtime data structures
   // that the real NIMModelListSection expects
   const [inferenceServiceData, setInferenceServiceData] = React.useState({
+    name: '',
+    k8sName: '',
+    project: '',
+    servingRuntimeName: '',
     format: { name: selectedModelName || '' },
+    externalRoute: false,
+    tokenAuth: false,
+    tokens: [],
+    storage: {
+      type: InferenceServiceStorageType.EXISTING_URI,
+      path: '/mnt/models/cache',
+      dataConnection: '',
+      uri: '/mnt/models/cache',
+      awsData: EMPTY_AWS_SECRET_DATA,
+    },
+    maxReplicas: 1,
+    minReplicas: 1,
   });
 
   const [servingRuntimeData, setServingRuntimeData] = React.useState<{

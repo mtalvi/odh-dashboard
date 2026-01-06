@@ -88,9 +88,6 @@ export const NIMFieldsContainer: React.FC<NIMFieldsContainerProps> = ({
         <StackItem>
           <NIMOperatorProgress
             currentStep={operatorProgress.currentStep}
-            modelsDiscovered={operatorProgress.modelsDiscovered}
-            modelsFetched={operatorProgress.modelsFetched}
-            totalModels={operatorProgress.totalModels}
             error={operatorProgress.error}
           />
         </StackItem>

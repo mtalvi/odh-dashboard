@@ -12,6 +12,7 @@ import {
   Stack,
   StackItem,
 } from '@patternfly/react-core';
+import { useNavigateToDeploymentWizard } from '@odh-dashboard/model-serving/components/deploymentWizard/useNavigateToDeploymentWizard';
 import { ProjectSectionID } from '#~/pages/projects/screens/detail/types';
 import { ProjectDetailsContext } from '#~/pages/projects/ProjectDetailsContext';
 import { ProjectSectionTitles } from '#~/pages/projects/screens/detail/const';
@@ -34,7 +35,6 @@ import { ProjectObjectType, typedEmptyImage } from '#~/concepts/design/utils';
 import EmptyModelServingPlatform from '#~/pages/modelServing/screens/projects/EmptyModelServingPlatform';
 import EmptyNIMModelServingCard from '#~/pages/modelServing/screens/projects/EmptyNIMModelServingCard';
 import { isProjectNIMSupported } from '#~/pages/modelServing/screens/projects/nimUtils';
-import ManageNIMServingModal from '#~/pages/modelServing/screens/projects/NIMServiceModal/ManageNIMServingModal';
 import { NamespaceApplicationCase } from '#~/pages/projects/types';
 import ModelServingPlatformSelectButton from '#~/pages/modelServing/screens/projects/ModelServingPlatformSelectButton';
 import ModelServingPlatformSelectErrorAlert from '#~/concepts/modelServing/Platforms/ModelServingPlatformSelectErrorAlert';
@@ -67,12 +67,14 @@ const ModelServingPlatform: React.FC = () => {
     serverSecrets: { refresh: refreshTokens },
     inferenceServices: {
       data: { items: inferenceServices },
-      refresh: refreshInferenceServices,
     },
     currentProject,
   } = React.useContext(ProjectDetailsContext);
 
   const isKServeNIMEnabled = isProjectNIMSupported(currentProject);
+
+  // Use wizard navigation for deployments
+  const navigateToWizard = useNavigateToDeploymentWizard();
 
   const templatesSorted = getSortedTemplates(templates, templateOrder);
   const templatesEnabled = templatesSorted.filter((template) =>
@@ -98,8 +100,14 @@ const ModelServingPlatform: React.FC = () => {
     setPlatformSelected(undefined);
     if (submit) {
       refreshServingRuntime();
-      refreshInferenceServices();
       setTimeout(refreshTokens, 500); // need a timeout to wait for tokens creation
+    }
+  };
+
+  // Handle deploy button click - navigate to wizard for both KServe and NIM
+  const handleDeployClick = () => {
+    if (currentProject.metadata.name) {
+      navigateToWizard(currentProject.metadata.name);
     }
   };
 
@@ -127,9 +135,7 @@ const ModelServingPlatform: React.FC = () => {
               testId="deploy-button"
               emptyTemplates={emptyTemplates}
               variant="primary"
-              onClick={() => {
-                setPlatformSelected(ServingRuntimePlatform.SINGLE);
-              }}
+              onClick={handleDeployClick}
             />
           }
           footerExtraChildren={<NavigateBackToRegistryButton isEmptyStateAction />}
@@ -145,10 +151,11 @@ const ModelServingPlatform: React.FC = () => {
       return null;
     }
 
-    // Now KServe-only
-
+    // Use wizard for NIM instead of old modal
+    // For non-NIM KServe deployments, keep the modal temporarily for backward compatibility
     if (isKServeNIMEnabled) {
-      return <ManageNIMServingModal projectContext={{ currentProject }} onClose={onSubmit} />;
+      // Don't render modal for NIM - wizard navigation is used instead
+      return null;
     }
 
     return (
@@ -175,9 +182,7 @@ const ModelServingPlatform: React.FC = () => {
                 <ModelServingPlatformButtonAction
                   testId="deploy-button"
                   emptyTemplates={emptyTemplates}
-                  onClick={() => {
-                    setPlatformSelected(ServingRuntimePlatform.SINGLE);
-                  }}
+                  onClick={handleDeployClick}
                   key="serving-runtime-actions"
                 />,
               ]

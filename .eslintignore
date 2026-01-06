@@ -1,0 +1,12 @@
+# Markdown files
+*.md
+
+# Build output
+dist/
+build/
+node_modules/
+
+# Coverage
+coverage/
+jest-coverage/
+
