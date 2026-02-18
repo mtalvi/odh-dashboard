@@ -44,6 +44,7 @@ export enum ModelLocationType {
   NEW = 'new',
   EXISTING = 'existing',
   PVC = 'pvc',
+  NIM = 'nim',
 }
 export enum ModelLocationSelectOption {
   EXISTING = 'Existing connection',
@@ -51,6 +52,7 @@ export enum ModelLocationSelectOption {
   S3 = 'S3 object storage',
   OCI = 'OCI compliant registry',
   URI = 'URI',
+  NIM = 'NVIDIA NIM',
 }
 
 export enum ModelTypeLabel {
@@ -80,7 +82,7 @@ export enum WizardStepTitle {
 }
 
 export type ModelLocationData = {
-  type: ModelLocationType.EXISTING | ModelLocationType.NEW | ModelLocationType.PVC;
+  type: ModelLocationType.EXISTING | ModelLocationType.NEW | ModelLocationType.PVC | ModelLocationType.NIM;
   connectionTypeObject?: ConnectionTypeConfigMapObj;
   connection?: string;
   disableInputFields?: boolean;
@@ -91,6 +93,15 @@ export type ModelLocationData = {
     modelPath?: string;
     modelUri?: string;
     pvcConnection?: string;
+    // For NIM additional fields
+    nimApiKey?: string;
+    nimModelName?: string;
+    nimModelVersion?: string;
+    nimModelDisplayName?: string;
+    nimModelNamespace?: string;
+    nimPvcSize?: string;
+    nimPvcMode?: 'create-new' | 'use-existing';
+    nimPvcName?: string;
   };
 };
 

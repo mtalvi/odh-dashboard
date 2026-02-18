@@ -11,6 +11,51 @@ export default async (fastify: KubeFastifyInstance): Promise<void> => {
     nimConfig: { type: 'ConfigMap', path: ['status', 'nimConfig', 'name'] },
   };
 
+  // API Key validation endpoint
+  fastify.post(
+    '/validate-key',
+    async (
+      request: OauthFastifyRequest<{
+        Body: { apiKey: string };
+      }>,
+    ) => {
+      logRequestDetails(fastify, request);
+      const { apiKey } = request.body;
+
+      if (!apiKey) {
+        return { valid: false, error: 'API key is required' };
+      }
+
+      if (!apiKey.startsWith('nvapi-')) {
+        return {
+          valid: false,
+          error: 'Only personal API keys (starting with "nvapi-") are supported',
+        };
+      }
+
+      try {
+        const response = await fetch('https://api.ngc.nvidia.com/v3/keys/get-caller-info', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: `credentials=${apiKey}`,
+        });
+
+        if (response.status === 200) {
+          return { valid: true };
+        }
+
+        fastify.log.warn(`API key validation failed with status ${response.status}`);
+        return { valid: false, error: 'Invalid API key' };
+      } catch (error) {
+        fastify.log.error(`Error validating API key: ${error}`);
+        return { valid: false, error: 'Failed to validate API key' };
+      }
+    },
+  );
+
   fastify.get(
     '/:nimResource',
     async (request: OauthFastifyRequest<{ Params: { nimResource: string } }>) => {

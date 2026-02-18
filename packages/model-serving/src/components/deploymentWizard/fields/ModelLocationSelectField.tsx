@@ -31,7 +31,7 @@ import { ModelLocationData, ModelLocationType } from '../types';
 
 // Schema
 export const modelLocationSelectFieldSchema = z.enum(
-  [ModelLocationType.EXISTING, ModelLocationType.NEW, ModelLocationType.PVC],
+  [ModelLocationType.EXISTING, ModelLocationType.NEW, ModelLocationType.PVC, ModelLocationType.NIM],
   {
     // eslint-disable-next-line @typescript-eslint/naming-convention, camelcase
     required_error: 'Select a model location.',
@@ -42,7 +42,8 @@ export type ModelLocationFieldData = z.infer<typeof modelLocationSelectFieldSche
 export const isValidModelLocation = (value: string): value is ModelLocationFieldData =>
   value === ModelLocationType.EXISTING ||
   value === ModelLocationType.NEW ||
-  value === ModelLocationType.PVC;
+  value === ModelLocationType.PVC ||
+  value === ModelLocationType.NIM;
 
 // Hooks
 export type ModelLocationField = {
@@ -68,6 +69,7 @@ type ModelLocationSelectFieldProps = {
   setSelectedConnection: (connection: Connection | undefined) => void;
   selectedConnection: Connection | undefined;
   pvcs: PersistentVolumeClaimKind[];
+  projectName?: string;
 };
 export const ModelLocationSelectField: React.FC<ModelLocationSelectFieldProps> = ({
   modelLocation,
@@ -80,6 +82,7 @@ export const ModelLocationSelectField: React.FC<ModelLocationSelectFieldProps> =
   setSelectedConnection,
   selectedConnection,
   pvcs,
+  projectName,
 }) => {
   const s3Option = {
     key: 'S3',
@@ -95,6 +98,11 @@ export const ModelLocationSelectField: React.FC<ModelLocationSelectFieldProps> =
     key: 'URI',
     label: 'URI',
     value: ModelLocationType.NEW,
+  };
+  const nimOption = {
+    key: ModelLocationType.NIM,
+    label: 'NVIDIA NIM',
+    value: ModelLocationType.NIM,
   };
   const [modelServingConnectionTypes, connectionTypesLoaded] = useWatchConnectionTypes(true);
 
@@ -221,6 +229,9 @@ export const ModelLocationSelectField: React.FC<ModelLocationSelectFieldProps> =
         : []),
       ...(pvcs.length > 0 ? [{ key: ModelLocationType.PVC, label: 'Cluster storage' }] : []),
     ];
+
+    // Always include NIM option
+    options.push({ key: nimOption.key, label: nimOption.label });
 
     // Always include the base option of the selected connection type (URI, OCI, S3) for edit prefill scenarios
     const hasS3Selected = selectedKey?.key === s3Option.key;
@@ -372,7 +383,8 @@ export const ModelLocationSelectField: React.FC<ModelLocationSelectFieldProps> =
                 value={
                   selectedKey?.key ??
                   (modelLocation === ModelLocationType.PVC ||
-                  modelLocation === ModelLocationType.EXISTING
+                  modelLocation === ModelLocationType.EXISTING ||
+                  modelLocation === ModelLocationType.NIM
                     ? modelLocation
                     : undefined)
                 }
@@ -396,6 +408,7 @@ export const ModelLocationSelectField: React.FC<ModelLocationSelectFieldProps> =
                   showCustomTypeSelect={showCustomTypeSelect}
                   customTypeOptions={typeOptions}
                   customTypeKey={selectedKey?.label}
+                  projectName={projectName}
                 />
               </StackItem>
             )}

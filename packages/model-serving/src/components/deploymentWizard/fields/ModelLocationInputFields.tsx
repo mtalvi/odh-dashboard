@@ -26,6 +26,9 @@ import { ExistingConnectionField } from './modelLocationFields/ExistingConnectio
 import NewConnectionField from './modelLocationFields/NewConnectionField';
 import { PvcSelectField } from './modelLocationFields/PVCSelectField';
 import { CustomTypeSelectField } from './modelLocationFields/CustomTypeSelectField';
+import { NimApiKeyField } from './modelLocationFields/NimApiKeyField';
+import { NimModelField } from './modelLocationFields/NimModelField';
+import { NimPvcField } from './modelLocationFields/NimPvcField';
 import usePvcs from '../../../concepts/usePvcs';
 import { ModelLocationData, ModelLocationType } from '../types';
 import { resolveConnectionType } from '../utils';
@@ -182,6 +185,17 @@ export const isValidModelLocationData = (
           `pvc://${modelLocationData.additionalFields.pvcConnection}/`,
         )
       );
+    case ModelLocationType.NIM:
+      return (
+        modelLocationData.type === ModelLocationType.NIM &&
+        !!modelLocationData.additionalFields.nimApiKey &&
+        !!modelLocationData.additionalFields.nimModelName &&
+        !!modelLocationData.additionalFields.nimModelVersion &&
+        ((modelLocationData.additionalFields.nimPvcMode === 'create-new' &&
+          !!modelLocationData.additionalFields.nimPvcSize) ||
+          (modelLocationData.additionalFields.nimPvcMode === 'use-existing' &&
+            !!modelLocationData.additionalFields.nimPvcName))
+      );
     default:
       return (
         modelLocationData.type === ModelLocationType.NEW &&
@@ -272,6 +286,7 @@ type ModelLocationInputFieldsProps = {
   showCustomTypeSelect: boolean;
   customTypeOptions?: ConnectionTypeConfigMapObj[];
   customTypeKey: string | undefined;
+  projectName?: string;
 };
 
 export const ModelLocationInputFields: React.FC<ModelLocationInputFieldsProps> = ({
@@ -288,6 +303,7 @@ export const ModelLocationInputFields: React.FC<ModelLocationInputFieldsProps> =
   showCustomTypeSelect,
   customTypeOptions,
   customTypeKey,
+  projectName,
 }) => {
   const filteredConnections = React.useMemo(() => {
     return connections.filter((c) => c.metadata.labels['opendatahub.io/dashboard'] === 'true');
@@ -405,6 +421,68 @@ export const ModelLocationInputFields: React.FC<ModelLocationInputFieldsProps> =
           });
         }}
       />
+    );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (modelLocation === ModelLocationType.NIM) {
+    return (
+      <>
+        <NimApiKeyField
+          value={modelLocationData?.additionalFields.nimApiKey}
+          onChange={(apiKey) => {
+            setModelLocationData({
+              type: ModelLocationType.NIM,
+              fieldValues: {},
+              additionalFields: {
+                ...modelLocationData?.additionalFields,
+                nimApiKey: apiKey,
+              },
+            });
+          }}
+          disabled={modelLocationData?.disableInputFields}
+        />
+        <NimModelField
+          modelName={modelLocationData?.additionalFields.nimModelName}
+          modelVersion={modelLocationData?.additionalFields.nimModelVersion}
+          modelDisplayName={modelLocationData?.additionalFields.nimModelDisplayName}
+          modelNamespace={modelLocationData?.additionalFields.nimModelNamespace}
+          projectName={projectName}
+          onChange={({ name, version, displayName, namespace }) => {
+            setModelLocationData({
+              type: ModelLocationType.NIM,
+              fieldValues: {},
+              additionalFields: {
+                ...modelLocationData?.additionalFields,
+                nimModelName: name,
+                nimModelVersion: version,
+                nimModelDisplayName: displayName,
+                nimModelNamespace: namespace,
+              },
+            });
+          }}
+          disabled={modelLocationData?.disableInputFields}
+        />
+        <NimPvcField
+          mode={modelLocationData?.additionalFields.nimPvcMode}
+          size={modelLocationData?.additionalFields.nimPvcSize}
+          existingPvcName={modelLocationData?.additionalFields.nimPvcName}
+          projectName={projectName}
+          onChange={(mode, size, pvcName) => {
+            setModelLocationData({
+              type: ModelLocationType.NIM,
+              fieldValues: {},
+              additionalFields: {
+                ...modelLocationData?.additionalFields,
+                nimPvcMode: mode,
+                nimPvcSize: size,
+                nimPvcName: pvcName,
+              },
+            });
+          }}
+          disabled={modelLocationData?.disableInputFields}
+        />
+      </>
     );
   }
 

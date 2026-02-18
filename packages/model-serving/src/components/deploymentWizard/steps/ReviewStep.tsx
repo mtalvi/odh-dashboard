@@ -79,6 +79,9 @@ const getStatusSections = (
             if (locationData.type === ModelLocationType.PVC) {
               return 'Cluster storage';
             }
+            if (locationData.type === ModelLocationType.NIM) {
+              return 'NVIDIA NIM';
+            }
             const connectionType = locationData.connectionTypeObject;
             if (
               connectionType &&
@@ -200,6 +203,57 @@ const getStatusSections = (
           optional: true,
           isVisible: (wizardState) =>
             wizardState.state.modelLocationData.data?.type === ModelLocationType.PVC,
+        },
+        {
+          key: 'modelLocationData-nimModel',
+          label: 'NIM Model',
+          comp: (state) => {
+            const locationData = state.modelLocationData.data;
+            if (!locationData || locationData.type !== ModelLocationType.NIM) {
+              return undefined;
+            }
+            const { nimModelDisplayName, nimModelVersion } = locationData.additionalFields;
+            return nimModelDisplayName && nimModelVersion
+              ? `${nimModelDisplayName} - ${nimModelVersion}`
+              : '--';
+          },
+          isVisible: (wizardState) =>
+            wizardState.state.modelLocationData.data?.type === ModelLocationType.NIM,
+        },
+        {
+          key: 'modelLocationData-nimPvc',
+          label: 'Model storage',
+          comp: (state) => {
+            const locationData = state.modelLocationData.data;
+            if (!locationData || locationData.type !== ModelLocationType.NIM) {
+              return undefined;
+            }
+            const { nimPvcMode, nimPvcSize, nimPvcName } = locationData.additionalFields;
+            if (nimPvcMode === 'create-new') {
+              return `New PVC (${nimPvcSize || '100Gi'})`;
+            }
+            if (nimPvcMode === 'use-existing' && nimPvcName) {
+              return `Existing PVC: ${nimPvcName}`;
+            }
+            return '--';
+          },
+          isVisible: (wizardState) =>
+            wizardState.state.modelLocationData.data?.type === ModelLocationType.NIM,
+        },
+        {
+          key: 'modelLocationData-nimApiKey',
+          label: 'API Key',
+          comp: (state) => {
+            const locationData = state.modelLocationData.data;
+            if (!locationData || locationData.type !== ModelLocationType.NIM) {
+              return undefined;
+            }
+            const { nimApiKey } = locationData.additionalFields;
+            // Mask the API key for security
+            return nimApiKey ? '•'.repeat(Math.min(nimApiKey.length, 20)) : '--';
+          },
+          isVisible: (wizardState) =>
+            wizardState.state.modelLocationData.data?.type === ModelLocationType.NIM,
         },
         ...getExtensionItems(WizardStepTitle.MODEL_DETAILS, extensionStatusSections),
       ],
