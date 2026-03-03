@@ -1,9 +1,13 @@
 import React from 'react';
-import { Stack, StackItem, Button } from '@patternfly/react-core';
+import { Stack, StackItem, Button, Alert, AlertVariant } from '@patternfly/react-core';
 import { NIMAPIKeyField } from './NIMAPIKeyField';
-import { NIMOperatorProgress, useNIMOperatorProgress } from './NIMOperatorProgress';
+import { NIMKeyValidationAlert, useNIMKeyValidation } from './NIMOperatorProgress';
 import NIMModelListSectionWrapper from './NIMModelListSectionWrapper';
 import { ModelLocationData, ModelLocationType } from '../../types';
+
+// Toggle this to simulate disconnected (air-gapped) mode.
+// Maps to OdhDashboardConfig.spec.nimConfig.disconnected.disableKeyCollection
+const DISABLE_KEY_COLLECTION = false;
 
 type NIMFieldsContainerProps = {
   modelLocationData?: ModelLocationData;
@@ -17,36 +21,34 @@ export const NIMFieldsContainer: React.FC<NIMFieldsContainerProps> = ({
   const [apiKey, setApiKey] = React.useState(modelLocationData?.additionalFields.nimApiKey || '');
   const [hasStartedValidation, setHasStartedValidation] = React.useState(false);
 
-  const operatorProgress = useNIMOperatorProgress(apiKey, hasStartedValidation);
+  const validation = useNIMKeyValidation(apiKey, hasStartedValidation);
 
-  // Check if API key looks valid (basic format check)
-  const isApiKeyValid = apiKey.startsWith('nvapi-') && apiKey.length > 10;
+  const isApiKeyEntered = apiKey.length > 0;
+  const showModelList = DISABLE_KEY_COLLECTION || validation.isComplete;
 
-  // Handle model selection from NIMModelListSection
   const handleModelSelection = React.useCallback(
-    (modelName: string, modelDisplayName?: string) => {
+    (modelName: string, modelDisplayName?: string, version?: string) => {
       setModelLocationData({
         type: ModelLocationType.NIM,
         fieldValues: {},
         additionalFields: {
-          nimApiKey: apiKey,
+          nimApiKey: DISABLE_KEY_COLLECTION ? '' : apiKey,
           nimModel: modelName
             ? {
                 name: modelName,
                 displayName: modelDisplayName || modelName,
-                version: '1', // Will be updated by real component
+                version: version || '1',
               }
             : undefined,
-          nimOperatorReady: operatorProgress.isComplete,
+          nimOperatorReady: showModelList,
         },
       });
     },
-    [apiKey, operatorProgress.isComplete, setModelLocationData],
+    [apiKey, showModelList, setModelLocationData],
   );
 
-  // Update parent state when operator completes
   React.useEffect(() => {
-    if (operatorProgress.isComplete) {
+    if (validation.isComplete) {
       const currentData = modelLocationData;
       if (currentData) {
         setModelLocationData({
@@ -59,42 +61,68 @@ export const NIMFieldsContainer: React.FC<NIMFieldsContainerProps> = ({
         });
       }
     }
-  }, [operatorProgress.isComplete, apiKey, modelLocationData, setModelLocationData]);
+  }, [validation.isComplete, apiKey, modelLocationData, setModelLocationData]);
 
   return (
     <Stack hasGutter>
-      <StackItem>
-        <NIMAPIKeyField
-          apiKey={apiKey}
-          setApiKey={setApiKey}
-          isDisabled={modelLocationData?.disableInputFields || operatorProgress.isProcessing}
-        />
-      </StackItem>
-
-      {isApiKeyValid && !hasStartedValidation && !operatorProgress.isProcessing && (
+      {DISABLE_KEY_COLLECTION ? (
         <StackItem>
-          <Button
-            variant="primary"
-            onClick={() => setHasStartedValidation(true)}
-            data-testid="validate-nim-key-button"
+          <Alert
+            variant={AlertVariant.info}
+            isInline
+            title="Disconnected mode"
+            data-testid="nim-disconnected-mode"
           >
-            Validate API key
-          </Button>
+            API key collection is disabled. Image pulling relies on the cluster&apos;s global pull
+            secret and ImageTagMirrorSet configuration.
+          </Alert>
         </StackItem>
+      ) : (
+        <>
+          <StackItem>
+            <NIMAPIKeyField
+              apiKey={apiKey}
+              setApiKey={(key) => {
+                setApiKey(key);
+                setHasStartedValidation(false);
+              }}
+              isDisabled={modelLocationData?.disableInputFields || validation.isProcessing}
+            />
+          </StackItem>
+
+          {isApiKeyEntered && !hasStartedValidation && (
+            <StackItem>
+              <Button
+                variant="primary"
+                onClick={() => setHasStartedValidation(true)}
+                data-testid="validate-nim-key-button"
+              >
+                Validate API key
+              </Button>
+            </StackItem>
+          )}
+
+          {hasStartedValidation && (
+            <StackItem>
+              <NIMKeyValidationAlert status={validation.status} error={validation.error} />
+            </StackItem>
+          )}
+
+          {validation.status === 'invalid' && (
+            <StackItem>
+              <Button
+                variant="secondary"
+                onClick={() => setHasStartedValidation(false)}
+                data-testid="retry-nim-key-button"
+              >
+                Try a different key
+              </Button>
+            </StackItem>
+          )}
+        </>
       )}
 
-      {/* Show 40-second progress animation */}
-      {hasStartedValidation && !operatorProgress.isComplete && (
-        <StackItem>
-          <NIMOperatorProgress
-            currentStep={operatorProgress.currentStep}
-            error={operatorProgress.error}
-          />
-        </StackItem>
-      )}
-
-      {/* Show real model list after operator completes */}
-      {operatorProgress.isComplete && (
+      {showModelList && (
         <StackItem>
           <NIMModelListSectionWrapper
             selectedModelName={modelLocationData?.additionalFields.nimModel?.name}

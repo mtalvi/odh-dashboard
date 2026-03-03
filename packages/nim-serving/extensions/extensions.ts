@@ -6,7 +6,7 @@ import type { AreaExtension } from '@odh-dashboard/plugin-core/extension-points'
 // eslint-disable-next-line no-restricted-syntax
 import type { SupportedArea } from '@odh-dashboard/internal/concepts/areas/types';
 // eslint-disable-next-line no-restricted-syntax
-import type { HardwareProfilePathways } from '@odh-dashboard/internal/concepts/hardwareProfiles/const';
+import type { CrPathConfig } from '@odh-dashboard/internal/concepts/hardwareProfiles/types';
 import type { NIMDeployment } from '../src/types';
 import { NIM_SERVING_ID } from '../src/types';
 
@@ -46,7 +46,7 @@ const extensions: (
       platform: NIM_SERVING_ID,
       hardwareProfilePaths: () =>
         import('@odh-dashboard/internal/concepts/hardwareProfiles/const').then(
-          (m) => m.INFERENCE_SERVICE_HARDWARE_PROFILE_PATHS as HardwareProfilePathways,
+          (m) => m.INFERENCE_SERVICE_HARDWARE_PROFILE_PATHS as CrPathConfig,
         ),
       extractHardwareProfileConfig: () =>
         import('../src/deployments/formData').then((m) => m.extractHardwareProfileConfig),

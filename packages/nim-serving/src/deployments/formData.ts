@@ -5,6 +5,8 @@ import type { useHardwareProfileConfig } from '@odh-dashboard/internal/concepts/
 import {
   getExistingHardwareProfileData,
   getExistingResources,
+} from '@odh-dashboard/internal/concepts/hardwareProfiles/utils';
+import {
   MODEL_SERVING_VISIBILITY,
   INFERENCE_SERVICE_HARDWARE_PROFILE_PATHS,
 } from '@odh-dashboard/internal/concepts/hardwareProfiles/const';
@@ -32,13 +34,13 @@ export const extractModelLocationData = (
     : undefined;
 
   // Extract PVC name from ServingRuntime volumes
-  const volumes = servingRuntime.spec.volumes || [];
+  const volumes = servingRuntime?.spec.volumes || [];
   const nimVolume = volumes.find((vol) => vol.persistentVolumeClaim && vol.name.includes('pvc'));
   const pvcName = nimVolume?.persistentVolumeClaim?.claimName;
 
   // Extract PVC size from ServingRuntime annotations (stored during deployment)
   // This is the NVIDIA NIM storage size field value
-  const annotations = servingRuntime.metadata.annotations || {};
+  const annotations = servingRuntime?.metadata.annotations || {};
   const nimPvcSize = annotations['opendatahub.io/nim-pvc-size'] || '30Gi';
   const nimPvcMode = annotations['opendatahub.io/nim-pvc-mode'] || 'use-existing';
   const nimStorageClassName = annotations['opendatahub.io/nim-storage-class'];
@@ -47,7 +49,7 @@ export const extractModelLocationData = (
   let modelPath = '/mnt/models/cache';
   let pvcSubPath: string | undefined;
 
-  const containers = servingRuntime.spec.containers || [];
+  const containers = servingRuntime?.spec.containers || [];
   for (const container of containers) {
     const volumeMounts = container.volumeMounts || [];
     for (const mount of volumeMounts) {
